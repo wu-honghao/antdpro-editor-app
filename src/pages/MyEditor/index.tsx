@@ -7,6 +7,7 @@ import { IDomEditor, IEditorConfig, IToolbarConfig, SlateText } from '@wangedito
 import { DataNode } from 'antd/lib/tree';
 import { v4 as uuidv4 } from 'uuid';
 
+interface TreeOne { title?: string; type: string; children: any; id?: string; }
 // 根据h1-h5切割数组
 const convert = (raw: { type?: any; children: SlateText[] }) => {
     return {
@@ -29,7 +30,7 @@ const isGte = (type1: string, type2: string) => {
 const isEqual = (type1: string, type2: string) => {
     return parseInt(isHeader(type1)) === parseInt(isHeader(type2));
 };
-const recurse = (node: { title?: string; type: string; children: any; id?: string; }, arr: string | any[]) => {
+const recurse = (node: TreeOne, arr: string | any[]) => {
     for (let i = 0; i < arr.length; i++) {
         const item = arr[i];
         if (isParent(node.type, item.type)) {
@@ -55,24 +56,21 @@ const createTree = (arr: { type: string; children: any; }[]) => {
     return result;
 };
 
+const treeOneToNode = (node: TreeOne) => ({
+    type: node.type,
+    children: [{
+        text: node.title
+    }]
+})
 interface Iprops {
     setTreeFunc?: Function
+    scrollItem?: TreeOne
 }
 const MyEditor: FC<Iprops> = (props: Iprops) => {
     const { setTreeFunc } = props
     // editor 实例
     const [editor, setEditor] = useState<IDomEditor | null>(null)
-
-    // 编辑器内容
-    const [html, setHtml] = useState('<p>hello</p>')
-
-    // 模拟 ajax 请求，异步设置 html
-    useEffect(() => {
-        setTimeout(() => {
-            setHtml('<p>hello world</p>')
-        }, 1500)
-    }, [])
-
+    const [editorContent, setEditorContent] = useState([])
     // 工具栏配置
     const toolbarConfig: Partial<IToolbarConfig> = {}
 
@@ -90,6 +88,11 @@ const MyEditor: FC<Iprops> = (props: Iprops) => {
         }
     }, [editor])
 
+    useEffect(() => {
+        if (!props.scrollItem) { return }
+        editor?.scrollToElem(editor?.toDOMNode(editorContent.find((item) => props.scrollItem?.title === item.children[0].text)).id)
+    }, [props.scrollItem])
+
     return (
         <>
             <div style={{ border: '1px solid #ccc', zIndex: 100 }}>
@@ -101,11 +104,11 @@ const MyEditor: FC<Iprops> = (props: Iprops) => {
                 />
                 <Editor
                     defaultConfig={editorConfig}
-                    value={html}
                     onCreated={setEditor}
                     // eslint-disable-next-line @typescript-eslint/no-shadow
                     onChange={editor => {
                         if (setTreeFunc) {
+                            setEditorContent(editor.children)
                             setTreeFunc(createTree(editor.children))
                         }
                     }}

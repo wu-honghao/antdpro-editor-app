@@ -5,11 +5,12 @@ import React from 'react';
 
 interface Iprops {
     treeData: DataNode[]
+    setScrollItem: Function
 }
 const OutLineTree: React.FC<Iprops> = (props: Iprops) => {
-    const { treeData } = props
+    const { treeData, setScrollItem } = props
     const onSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
-        console.log('selected', selectedKeys, info);
+        setScrollItem(info.selectedNodes[0])
     };
 
     return (
