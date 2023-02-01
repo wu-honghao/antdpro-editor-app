@@ -1,4 +1,6 @@
 import '@wangeditor/editor/dist/css/style.css' // 引入 css
+import { Boot } from '@wangeditor/editor'
+import markdownModule from '@wangeditor/plugin-md'
 
 import type { FC } from 'react';
 import { useState, useEffect } from 'react'
@@ -46,6 +48,9 @@ const createTree = (arr: { type: string; children: any; }[]) => {
     const head = arr[0];
     for (let i = 0; i < arr.length; i++) {
         const item = arr[i];
+        if (item.children[0].text.trim() === '') {
+            continue
+        }
         if (isEqual(head.type, item.type)) {
             const converedItem = convert(item);
             result.push(converedItem);
@@ -56,20 +61,17 @@ const createTree = (arr: { type: string; children: any; }[]) => {
     return result;
 };
 
-const treeOneToNode = (node: TreeOne) => ({
-    type: node.type,
-    children: [{
-        text: node.title
-    }]
-})
 interface Iprops {
     setTreeFunc?: Function
     scrollItem?: TreeOne
 }
 const MyEditor: FC<Iprops> = (props: Iprops) => {
+    Boot.registerModule(markdownModule)
+
     const { setTreeFunc } = props
     // editor 实例
     const [editor, setEditor] = useState<IDomEditor | null>(null)
+
     const [editorContent, setEditorContent] = useState([])
     // 工具栏配置
     const toolbarConfig: Partial<IToolbarConfig> = {}
